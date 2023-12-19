@@ -1,0 +1,34 @@
+@page "/deliveries"
+@inject DataContext Context
+@using BlazorSsrFlowControl.Models
+
+<h3>Entregar - @lastActiveOrder.ModelName</h3>
+
+<button @onclick="CreateDelivery">ENVIAR</button>
+
+@code 
+{
+    private Delivery newDelivery = new();
+    private Order lastActiveOrder = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        lastActiveOrder = await Context.Orders.OrderByDescending(x => x.Id).FirstOrDefaultAsync(x => x.IsActive == true);
+    }
+
+    async Task CreateDelivery()
+    {
+        DateTime actualTime = DateTime.Now;
+
+        newDelivery.OrderId = lastActiveOrder.Id;
+        newDelivery.Quantity = lastActiveOrder.QuantityPerDelivery;
+        newDelivery.Hour = actualTime.Hour;
+        newDelivery.Minute = actualTime.Minute;
+
+        lastActiveOrder.ActualQuantity += lastActiveOrder.QuantityPerDelivery;
+
+        Context.Deliveries.Add(newDelivery);
+
+        await Context.SaveChangesAsync();
+    }
+}
