@@ -1,0 +1,69 @@
+﻿@page "/orders"
+@inject DataContext Context
+@inject NavigationManager NavigationManager
+@attribute [StreamRendering]
+
+<PageTitle>Órdenes</PageTitle>
+<h3>Lista de órdenes</h3>
+
+@if (orders.Count == 0)
+{
+    <p><em>Cargando...</em></p>
+}
+else
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Fecha</th>
+                <th>Cantidad</th>
+                <th>Modelo</th>
+                <th></th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+        @foreach (var order in orders)
+        {
+           <tr>
+               <td>@(order.Day?.ToString("D2"))/@(order.Month?.ToString("D2"))</td>
+               <td>@order.ActualQuantity/@order.GoalQuantity</td>
+               <td>@order.ModelName</td>
+               <td><a href="edit-order/@order.Id">Editar</a></td>
+               <td>
+                   <form method="post" data-enhance @formname="@($"DeleteOrderForm{order.Id}")" @onsubmit="() => DeleteOrder(order.Id)">
+                        <button class="btn btn-link p-0 m-0">
+                            Eliminar
+                        </button>
+                        <AntiforgeryToken />
+                   </form>
+               </td>
+           </tr> 
+        }
+        </tbody>
+    </table>
+}
+
+<a href="/edit-order">Agregar nueva orden</a>
+
+@code {
+    List<Order> orders = new List<Order>();
+
+    protected override async Task OnInitializedAsync()
+    {
+        orders = await Context.Orders
+            .OrderByDescending(x => x.Id).Take(10).ToListAsync();
+    }
+
+    async Task DeleteOrder(int id)
+    {
+        var dbOrder = await Context.Orders.FindAsync(id);
+        if (dbOrder is not null)
+        {
+            Context.Remove(dbOrder);
+            await Context.SaveChangesAsync();
+            orders = await Context.Orders
+           .OrderByDescending(x => x.Id).Take(10).ToListAsync();
+        }
+    }
+}

@@ -1,0 +1,196 @@
+﻿@page "/edit-order"
+@page "/edit-order/{Id:int}"
+@inject DataContext Context
+
+@if (Id is null)
+{
+    <PageTitle>Agregar una orden</PageTitle>
+    <h3 class="text-center">Agregar una nueva orden</h3>
+}
+else
+{
+    <PageTitle>Editar orden Nro @Id</PageTitle>
+    <h3 class="text-center">Editar orden Nro @Id</h3>
+}
+
+<EditForm Enhance Model="CurrentOrder" OnSubmit="HandleSubmit" FormName="OrderForm" class="container-sm text-center mt-4">
+    <div class="row">
+        <div class="col-md">
+            <label for="sectorName">Sector</label>
+            <InputText id="sectorName" @bind-Value="CurrentOrder.SectorName" class="form-control" />
+        </div>
+        <div class="col-md">
+            <label for="modelName">Modelo</label>
+            <InputText id="modelName" @bind-Value="CurrentOrder.ModelName" class="form-control" />
+        </div>
+        <div class="col-md">
+            <label for="part">Pieza</label>
+            <InputText id="part" @bind-Value="CurrentOrder.Part" class="form-control" />
+        </div>
+    </div>
+    <div class="row mt-4">
+         <div class="col-sm">
+            <label for="goalQuantity">Q Objetivo</label>
+            <InputNumber id="goalQuantity" @bind-Value="CurrentOrder.GoalQuantity" class="form-control" />
+        </div>
+         <div class="col-sm">
+            <label for="actualQuantity">Q Entregada</label>
+            <InputNumber id="actualQuantity" @bind-Value="CurrentOrder.ActualQuantity" class="form-control" />
+        </div>
+        <div class="col-sm">
+            <label for="quantityPerDelivery">Q Canasto</label>
+            <InputNumber id="quantityPerDelivery" @bind-Value="CurrentOrder.QuantityPerDelivery" class="form-control" />
+        </div>
+    </div>
+    <div class="row mt-3">
+        <div class="col-md">
+            <label>Fecha</label>
+            <div class="row">
+                <div class="col">
+                    <InputNumber id="day" @bind-Value="CurrentOrder.Day" class="form-control" placeholder="Día"/>
+                </div>
+                <div class="col">
+                    <InputNumber id="month" @bind-Value="CurrentOrder.Month" class="form-control" placeholder="Mes"/>
+                </div>
+            </div>
+        </div>
+        <div class="col-md">
+            <label>Hora inicio</label>
+            <div class="row">
+                <div class="col">
+                    <InputNumber id="startHour" @bind-Value="CurrentOrder.StartHour" class="form-control" placeholder="Hora" />
+                </div>
+                <div class="col">
+                    <InputNumber id="startMinute" @bind-Value="CurrentOrder.StartMinute" class="form-control" placeholder="Minuto" />
+                </div>
+            </div>
+        </div>
+        <div class="col-md">
+            <label>Hora fin</label>
+            <div class="row">
+                <div class="col">
+                    <InputNumber id="endHour" @bind-Value="CurrentOrder.EndHour" class="form-control" placeholder="Hora" />
+                </div>
+                <div class="col">
+                    <InputNumber id="endMinute" @bind-Value="CurrentOrder.EndMinute" class="form-control" placeholder="Minuto" />
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row mt-4">
+        <div class="col">
+            <label for="isCompleted" class="d-block">Completada</label>
+            <InputRadioGroup id="isCompleted" @bind-Value="CurrentOrder.IsCompleted" class="mt-2">
+                <label for="completedYes">Si</label> <InputRadio Value="true" id="completedYes"/>
+                <label for="completedNo">No</label> <InputRadio Value="false" id="completedNo"/>
+            </InputRadioGroup>
+        </div>
+        <div class="col">
+            <label for="isActive" class="d-block">Activa</label>
+            <InputRadioGroup id="isActive" @bind-Value="CurrentOrder.IsActive" class="mt-2">
+                <label for="activeYes">Si</label> <InputRadio Value="true" id="activeYes"/>
+                <label for="activeNo">No</label> <InputRadio Value="false" id="activeNo"/>
+            </InputRadioGroup>
+        </div>
+    </div>
+    <button type="submit" class="btn btn-primary mt-4">Guardar</button>
+</EditForm>
+
+<p>@status</p>
+
+@code {
+    [Parameter]
+    public int? Id { get; set; } = null;
+
+    [SupplyParameterFromForm]
+    public Order CurrentOrder { get; set; } = new();
+
+    private string status = string.Empty;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (Id is not null)
+        {
+            var order = await Context.Orders.FindAsync(Id);
+            if (order is not null)
+            {
+                CurrentOrder.IsActive ??= order.IsActive;
+                CurrentOrder.IsCompleted ??= order.IsCompleted;
+                CurrentOrder.SectorName ??= order.SectorName;
+                CurrentOrder.ModelName ??= order.ModelName;
+                CurrentOrder.Part ??= order.Part;
+                CurrentOrder.GoalQuantity ??= order.GoalQuantity;
+                CurrentOrder.ActualQuantity ??= order.ActualQuantity;
+                CurrentOrder.QuantityPerDelivery ??= order.QuantityPerDelivery;
+                CurrentOrder.StartHour ??= order.StartHour;
+                CurrentOrder.StartMinute ??= order.StartMinute;
+                CurrentOrder.EndHour ??= order.EndHour;
+                CurrentOrder.EndMinute ??= order.EndMinute;
+                CurrentOrder.Day ??= order.Day;
+                CurrentOrder.Month ??= order.Month;
+            }
+        }
+    }
+
+    async Task HandleSubmit()
+    {
+        if (Id is not null)
+        {
+            await UpdateOrder();    
+        }
+        else
+        {
+            await CreateOrder();
+        }
+
+    }
+
+    async Task UpdateOrder()
+    {
+        var dbOrder = await Context.Orders.FindAsync(Id);
+        if (dbOrder is not null)
+        {
+            dbOrder.IsActive = CurrentOrder.IsActive;
+            dbOrder.IsCompleted = CurrentOrder.IsCompleted;
+            dbOrder.SectorName = CurrentOrder.SectorName;
+            dbOrder.ModelName = CurrentOrder.ModelName;
+            dbOrder.Part = CurrentOrder.Part;
+            dbOrder.GoalQuantity = CurrentOrder.GoalQuantity;
+            dbOrder.ActualQuantity = CurrentOrder.ActualQuantity;
+            dbOrder.QuantityPerDelivery = CurrentOrder.QuantityPerDelivery;
+            dbOrder.StartHour = CurrentOrder.StartHour;
+            dbOrder.StartMinute = CurrentOrder.StartMinute;
+            dbOrder.EndHour = CurrentOrder.EndHour;
+            dbOrder.EndMinute = CurrentOrder.EndMinute;
+            dbOrder.Day = CurrentOrder.Day;
+            dbOrder.Month = CurrentOrder.Month;
+
+            var result = await Context.SaveChangesAsync();
+
+            if (result == 1)
+            {
+                status = "Cambios guardados!";
+            }
+            else
+            {
+                status = "Algo salió mal... :/";
+            }
+
+        }
+    }
+
+    async Task CreateOrder()
+    {
+        Context.Orders.Add(CurrentOrder);
+        var result = await Context.SaveChangesAsync();
+
+        if (result == 1)
+        {
+            status = "Orden agregada correctamente!"; 
+        }
+        else
+        {
+            status = "Algo salió mal... :/";
+        }
+    }
+}
