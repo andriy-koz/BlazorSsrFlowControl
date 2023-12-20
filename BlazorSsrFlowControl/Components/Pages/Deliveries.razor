@@ -5,8 +5,10 @@
 
 @if (lastActiveOrder is not null)
 {
-    <h3>Entregar - <span class="text-primary">@lastActiveOrder.ModelName</span></h3>
-    <h3 class="text-primary">@lastActiveOrder.ActualQuantity/@lastActiveOrder.GoalQuantity</h3>
+    <div class="text-center" style="border-radius: 999px; background-color: @statusColor;" >
+        <h3><span class="text-primary">@lastActiveOrder.ModelName</span></h3>
+        <h3 class="col">@lastActiveOrder.ActualQuantity / @(actualQuantityGoal?.ToString("0") ?? "0")</h3>
+    </div>
 
     <EditForm FormName="DeliveryForm" Model="NewDelivery" OnSubmit="HandleSubmit">
         <InputNumber @bind-Value="NewDelivery.Quantity" class="visually-hidden" />
@@ -26,8 +28,14 @@ else
     private Order lastActiveOrder = new();
     private int orderId;
     private int? quantityPerDelivery;
-
-    private string buttonStyle = string.Empty;  
+    private string buttonStyle = string.Empty; 
+    private string statusColor = string.Empty;
+    private DateTime actualTime;
+    private float? actualQuantityGoal;
+    private float? startHourMinute;
+    private float? endHourMinute;
+    private float? actualHourMinute;
+    private float? partsPerHour;
 
     protected override async Task OnParametersSetAsync()
     {
@@ -40,6 +48,9 @@ else
         {
             orderId = lastActiveOrder.Id;
             quantityPerDelivery = lastActiveOrder.QuantityPerDelivery;
+
+            SetActualQuantityGoal();
+            SetStatusColor();
         }
     }
     async Task CreateDelivery()
@@ -73,6 +84,34 @@ else
         if (lastActiveOrder is not null)
         {
             await CreateDelivery();
+        }
+    }
+
+    private void SetActualQuantityGoal()
+    {
+        actualTime = DateTime.Now;
+        actualHourMinute = actualTime.Hour + (float)actualTime.Minute / 60;
+        startHourMinute = lastActiveOrder.StartHour + (float)lastActiveOrder.StartMinute / 60;
+        endHourMinute = lastActiveOrder.EndHour + (float)lastActiveOrder.EndMinute / 60;
+
+        partsPerHour = lastActiveOrder.GoalQuantity / (endHourMinute - startHourMinute);
+
+        actualQuantityGoal = partsPerHour * (actualHourMinute - startHourMinute); 
+    }
+
+    private void SetStatusColor()
+    {
+        if (lastActiveOrder.ActualQuantity >= actualQuantityGoal - 5)
+        {
+            statusColor = "lawngreen";
+        } 
+        if (lastActiveOrder.ActualQuantity <= actualQuantityGoal - 5)
+        {
+            statusColor = "yellow";
+        }
+        if (lastActiveOrder.ActualQuantity <= actualQuantityGoal - 20)
+        {
+            statusColor = "red";
         }
     }
 }
