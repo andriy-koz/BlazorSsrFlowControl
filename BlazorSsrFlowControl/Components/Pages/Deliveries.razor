@@ -2,33 +2,61 @@
 @inject DataContext Context
 @using BlazorSsrFlowControl.Models
 
-<h3>Entregar - @lastActiveOrder.ModelName</h3>
+@if (lastActiveOrder is not null)
+{
+    <h3>Entregar - @lastActiveOrder.ModelName</h3>
 
-<button @onclick="CreateDelivery">ENVIAR</button>
+    <EditForm FormName="DeliveryForm" Model="NewDelivery" OnSubmit="HandleSubmit">
+        <InputNumber @bind-Value="NewDelivery.Quantity" class="visually-hidden" />
+        <InputNumber @bind-Value="NewDelivery.OrderId" class="visually-hidden" />
+        <button type="submit" class="btn btn-primary">Enviar</button> 
+    </EditForm>
+}
+else 
+{
+    <h3>No hay ordenes activas</h3>
+}
 
 @code 
 {
-    private Delivery newDelivery = new();
+    [SupplyParameterFromForm]
+    private Delivery NewDelivery { get; set; } = new();
     private Order lastActiveOrder = new();
+    private int orderId;
+    private int? quantityPerDelivery;
 
-    protected override async Task OnInitializedAsync()
+    protected override async Task OnParametersSetAsync()
     {
-        lastActiveOrder = await Context.Orders.OrderByDescending(x => x.Id).FirstOrDefaultAsync(x => x.IsActive == true);
+        if(Context.Orders is not null)
+        {
+            lastActiveOrder = await Context.Orders.OrderByDescending(x => x.Id).FirstOrDefaultAsync(x => x.IsActive == true);
+        }
+        if (lastActiveOrder is not null)
+        {
+            orderId = lastActiveOrder.Id;
+            quantityPerDelivery = lastActiveOrder.QuantityPerDelivery;
+        }
     }
-
     async Task CreateDelivery()
     {
         DateTime actualTime = DateTime.Now;
 
-        newDelivery.OrderId = lastActiveOrder.Id;
-        newDelivery.Quantity = lastActiveOrder.QuantityPerDelivery;
-        newDelivery.Hour = actualTime.Hour;
-        newDelivery.Minute = actualTime.Minute;
+        NewDelivery.Hour = actualTime.Hour;
+        NewDelivery.Minute = actualTime.Minute;
+        NewDelivery.Quantity = quantityPerDelivery;
+        NewDelivery.OrderId = orderId;
 
         lastActiveOrder.ActualQuantity += lastActiveOrder.QuantityPerDelivery;
 
-        Context.Deliveries.Add(newDelivery);
+        Context.Deliveries.Add(NewDelivery);
 
         await Context.SaveChangesAsync();
+    }
+
+    async Task HandleSubmit() {
+        if (lastActiveOrder is not null)
+        {
+            await CreateDelivery();
+        }
     }
 }
