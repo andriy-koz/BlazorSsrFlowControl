@@ -4,10 +4,25 @@
 
 @if (@deliveries is not null)
 {
-    @foreach (var delivery in @deliveries)
-    {
-        <p>@delivery.Quantity</p>
-    }
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Id Orden</th>
+                <th>Cantidad Entregada</th>
+                <th>Hora</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var delivery in @deliveries)
+            {
+                <tr>
+                    <td>@delivery.OrderId</td>
+                    <td>@delivery.Quantity</td>
+                    <td>@delivery.Hour:@delivery.Minute</td>
+                </tr>
+            }
+        </tbody>
+    </table>
 }
 @code 
 {
