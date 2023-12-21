@@ -1,0 +1,117 @@
+@page "/deliveries"
+@inject DataContext Context
+@inject NavigationManager NavigationManager
+@using BlazorSsrFlowControl.Models
+
+@if (lastActiveOrder is not null)
+{
+    <div class="text-center" style="border-radius: 999px; background-color: @statusColor;" >
+        <h3><span class="text-primary">@lastActiveOrder.ModelName</span></h3>
+        <h3 class="col">@lastActiveOrder.ActualQuantity / @(actualQuantityGoal?.ToString("0") ?? "0")</h3>
+    </div>
+
+    <EditForm FormName="DeliveryForm" Model="NewDelivery" OnSubmit="HandleSubmit">
+        <InputNumber @bind-Value="NewDelivery.Quantity" class="visually-hidden" />
+        <InputNumber @bind-Value="NewDelivery.OrderId" class="visually-hidden" />
+        <button type="submit" style=@buttonStyle>Enviar</button> 
+    </EditForm>
+}
+else 
+{
+    <h3>No hay órdenes activas</h3>
+}
+
+@code 
+{
+    [SupplyParameterFromForm]
+    private Delivery NewDelivery { get; set; } = new();
+    private Order lastActiveOrder = new();
+    private int orderId;
+    private int? quantityPerDelivery;
+    private string buttonStyle = string.Empty; 
+    private string statusColor = string.Empty;
+    private DateTime actualTime;
+    private float? actualQuantityGoal;
+    private float? startHourMinute;
+    private float? endHourMinute;
+    private float? actualHourMinute;
+    private float? partsPerHour;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        buttonStyle = "background-color: red; color: white; border-radius: 999px; width: 100%; height: 70vh; font-size: 32px; text-transform: uppercase;";
+        if(Context.Orders is not null)
+        {
+            lastActiveOrder = await Context.Orders.OrderByDescending(x => x.Id).FirstOrDefaultAsync(x => x.IsActive == true);
+        }
+        if (lastActiveOrder is not null)
+        {
+            orderId = lastActiveOrder.Id;
+            quantityPerDelivery = lastActiveOrder.QuantityPerDelivery;
+
+            SetActualQuantityGoal();
+            SetStatusColor();
+        }
+    }
+    async Task CreateDelivery()
+    {
+        DateTime actualTime = DateTime.Now;
+
+        NewDelivery.Hour = actualTime.Hour;
+        NewDelivery.Minute = actualTime.Minute;
+        NewDelivery.Quantity = quantityPerDelivery;
+        NewDelivery.OrderId = orderId;
+
+        lastActiveOrder.ActualQuantity += lastActiveOrder.QuantityPerDelivery;
+
+        if(lastActiveOrder.ActualQuantity >= lastActiveOrder.GoalQuantity)
+        {
+            lastActiveOrder.IsCompleted = true;
+            lastActiveOrder.IsActive = false;
+        }
+
+        Context.Deliveries.Add(NewDelivery);
+
+        await Context.SaveChangesAsync();
+
+        if (lastActiveOrder.IsActive == false)
+        {
+            NavigationManager.NavigateTo("/deliveries", true);
+        }
+    }
+
+    async Task HandleSubmit() {
+        if (lastActiveOrder is not null)
+        {
+            await CreateDelivery();
+        }
+    }
+
+    private void SetActualQuantityGoal()
+    {
+        actualTime = DateTime.Now;
+        actualHourMinute = actualTime.Hour + (float)actualTime.Minute / 60;
+        startHourMinute = lastActiveOrder.StartHour + (float)lastActiveOrder.StartMinute / 60;
+        endHourMinute = lastActiveOrder.EndHour + (float)lastActiveOrder.EndMinute / 60;
+
+        partsPerHour = lastActiveOrder.GoalQuantity / (endHourMinute - startHourMinute);
+
+        actualQuantityGoal = partsPerHour * (actualHourMinute - startHourMinute); 
+    }
+
+    private void SetStatusColor()
+    {
+        if (lastActiveOrder.ActualQuantity >= actualQuantityGoal - 5)
+        {
+            statusColor = "lawngreen";
+        } 
+        if (lastActiveOrder.ActualQuantity <= actualQuantityGoal - 5)
+        {
+            statusColor = "yellow";
+        }
+        if (lastActiveOrder.ActualQuantity <= actualQuantityGoal - 20)
+        {
+            statusColor = "red";
+        }
+    }
+}

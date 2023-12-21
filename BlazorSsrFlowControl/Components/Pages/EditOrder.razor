@@ -1,6 +1,7 @@
 ﻿@page "/edit-order"
 @page "/edit-order/{Id:int}"
 @inject DataContext Context
+@using BlazorSsrFlowControl.Data
 
 @if (Id is null)
 {
@@ -17,15 +18,30 @@ else
     <div class="row">
         <div class="col-md">
             <label for="sectorName">Sector</label>
-            <InputText id="sectorName" @bind-Value="CurrentOrder.SectorName" class="form-control" />
+            <InputSelect id="sectorName" @bind-Value="CurrentOrder.SectorName" class="form-control" >
+                @foreach (var sector in @sectors)
+                {
+                    <option value=@sector>@sector</option>
+                }
+            </InputSelect>
         </div>
         <div class="col-md">
             <label for="modelName">Modelo</label>
-            <InputText id="modelName" @bind-Value="CurrentOrder.ModelName" class="form-control" />
+            <InputSelect id="modelName" @bind-Value="CurrentOrder.ModelName" class="form-control" >
+                @foreach (var model in @models)
+                {
+                    <option value=@model>@model</option>
+                }
+            </InputSelect>
         </div>
         <div class="col-md">
             <label for="part">Pieza</label>
-            <InputText id="part" @bind-Value="CurrentOrder.Part" class="form-control" />
+            <InputSelect id="part" @bind-Value="CurrentOrder.Part" class="form-control" >
+                @foreach (var part in @parts)
+                {
+                    <option value=@part>@part</option>
+                }
+            </InputSelect>
         </div>
     </div>
     <div class="row mt-4">
@@ -47,7 +63,7 @@ else
             <label>Fecha</label>
             <div class="row">
                 <div class="col">
-                    <InputNumber id="day" @bind-Value="CurrentOrder.Day" class="form-control" placeholder="Día"/>
+                    <InputNumber id="day" @bind-Value="CurrentOrder.Day" class="form-control" placeholder="Día" />
                 </div>
                 <div class="col">
                     <InputNumber id="month" @bind-Value="CurrentOrder.Month" class="form-control" placeholder="Mes"/>
@@ -107,6 +123,11 @@ else
 
     private string status = string.Empty;
 
+    private FormOptionsData formOptionsData = new();
+    private List<string> models = new();
+    private List<string> parts = new();
+    private List<string> sectors = new();
+
     protected override async Task OnParametersSetAsync()
     {
         if (Id is not null)
@@ -130,6 +151,28 @@ else
                 CurrentOrder.Month ??= order.Month;
             }
         }
+        else
+        {
+            DateTime actualDate = DateTime.Now;
+
+            CurrentOrder.IsActive ??= true;
+            CurrentOrder.IsCompleted ??= false;
+            CurrentOrder.SectorName ??= "Soldadura";
+            CurrentOrder.ModelName ??= "A4";
+            CurrentOrder.Part ??= "Terminados";
+            CurrentOrder.GoalQuantity ??= 200;
+            CurrentOrder.ActualQuantity ??= 0;
+            CurrentOrder.QuantityPerDelivery ??= 5;
+            CurrentOrder.StartHour ??= 7;
+            CurrentOrder.StartMinute ??= 0;
+            CurrentOrder.EndHour ??= 16;
+            CurrentOrder.EndMinute ??= 0;
+            CurrentOrder.Day ??= actualDate.Day;
+            CurrentOrder.Month ??= actualDate.Month;
+        }
+        models = formOptionsData.models;
+        parts = formOptionsData.parts;
+        sectors = formOptionsData.sectors;
     }
 
     async Task HandleSubmit()

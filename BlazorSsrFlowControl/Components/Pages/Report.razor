@@ -1,0 +1,35 @@
+@page "/report"
+@inject DataContext Context
+@using BlazorSsrFlowControl.Models
+
+@if (@deliveries is not null)
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Id Orden</th>
+                <th>Cantidad Entregada</th>
+                <th>Hora</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var delivery in @deliveries)
+            {
+                <tr>
+                    <td>@delivery.OrderId</td>
+                    <td>@delivery.Quantity</td>
+                    <td>@delivery.Hour:@delivery.Minute</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+@code 
+{
+    private List<Delivery> deliveries = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        deliveries = await Context.Deliveries.OrderByDescending(x => x.Id).ToListAsync();
+    }
+}
