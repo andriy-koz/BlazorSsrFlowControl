@@ -1,6 +1,8 @@
 ﻿@page "/edit-order"
 @page "/edit-order/{Id:int}"
 @inject DataContext Context
+@inject NavigationManager NavigationManager
+@inject IHttpContextAccessor httpContextAccessor
 @using BlazorSsrFlowControl.Data
 
 @if (Id is null)
@@ -130,6 +132,15 @@ else
 
     protected override async Task OnParametersSetAsync()
     {
+        var cookieValue = httpContextAccessor.HttpContext?.Request.Cookies["ProdControlSessionToken"];
+
+        bool accessAllowed = cookieValue == "admin";
+
+        if (!accessAllowed)
+        {
+            NavigationManager.NavigateTo("/");
+        }
+
         if (Id is not null)
         {
             var order = await Context.Orders.FindAsync(Id);

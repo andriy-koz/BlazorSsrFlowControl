@@ -1,6 +1,7 @@
 ﻿@page "/orders"
 @inject DataContext Context
 @inject NavigationManager NavigationManager
+@inject IHttpContextAccessor httpContextAccessor
 @attribute [StreamRendering]
 
 <PageTitle>Órdenes</PageTitle>
@@ -53,6 +54,15 @@ else
     {
         orders = await Context.Orders
             .OrderByDescending(x => x.Id).Take(10).ToListAsync();
+
+        var cookieValue = httpContextAccessor.HttpContext?.Request.Cookies["ProdControlSessionToken"];
+
+        bool accessAllowed = cookieValue == "admin";
+
+        if (!accessAllowed)
+        {
+            NavigationManager.NavigateTo("/");
+        }
     }
 
     async Task DeleteOrder(int id)

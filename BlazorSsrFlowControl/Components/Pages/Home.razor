@@ -1,8 +1,21 @@
 ﻿@page "/"
 
-<PageTitle>Inicio</PageTitle>
+<PageTitle>Inicio de sesión</PageTitle>
 
-<h1>Inicio</h1>
+<form method="post" action="login" class="p-4 container-fluid">
+    <h3 class="mb-3">Control de flujo</h3>
 
+    <div class="mb-3">
+        <input type="text" id="username" name="username" placeholder="Usuario" class="form-control" />
+    </div>
+    <div class="mb-3">
+        <input type="password" id="password" name="password" placeholder="Contraseña" class="form-control" />
+    </div>
+    <button type="submit" class="btn btn-primary">Entrar</button>
+</form>
+
+@code 
+{
+}
 
 

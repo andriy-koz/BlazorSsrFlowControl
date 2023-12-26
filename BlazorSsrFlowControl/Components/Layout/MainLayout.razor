@@ -1,9 +1,14 @@
 ﻿@inherits LayoutComponentBase
 
+@inject IHttpContextAccessor httpContextAccessor
+
 <div class="page">
-    <div class="sidebar">
-        <NavMenu />
-    </div>
+    @if (accessAllowed)
+    {
+        <div class="sidebar">
+            <NavMenu />
+        </div>
+    }
 
     <main>
         <article class="content px-4">
@@ -11,3 +16,15 @@
         </article>
     </main>
 </div>
+
+@code 
+{
+    private bool accessAllowed = false;
+
+    protected override void OnInitialized()
+    {
+        var cookieValue = httpContextAccessor.HttpContext?.Request.Cookies["ProdControlSessionToken"];
+
+        accessAllowed = cookieValue == "admin";
+    }
+}

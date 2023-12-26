@@ -1,7 +1,11 @@
 @page "/deliveries"
 @inject DataContext Context
 @inject NavigationManager NavigationManager
+@inject IHttpContextAccessor httpContextAccessor
+@using System.Net.Mail
+@using System.Net
 @using BlazorSsrFlowControl.Models
+@using BlazorSsrFlowControl.Services
 
 @if (lastActiveOrder is not null)
 {
@@ -25,7 +29,7 @@ else
 {
     [SupplyParameterFromForm]
     private Delivery NewDelivery { get; set; } = new();
-    private Order lastActiveOrder = new();
+    private Order? lastActiveOrder = new();
     private int orderId;
     private int? quantityPerDelivery;
     private string buttonStyle = string.Empty; 
@@ -39,6 +43,19 @@ else
 
     protected override async Task OnParametersSetAsync()
     {
+        var cookieValue = httpContextAccessor.HttpContext?.Request.Cookies["ProdControlSessionToken"];
+
+        bool accessAllowed = false;
+
+        if (cookieValue == "admin" || cookieValue == "soldadura")
+        {
+            accessAllowed = true;
+        }
+
+        if (!accessAllowed)
+        {
+            NavigationManager.NavigateTo("/");
+        }
         buttonStyle = "background-color: red; color: white; border-radius: 999px; width: 100%; height: 70vh; font-size: 32px; text-transform: uppercase;";
         if(Context.Orders is not null)
         {
@@ -62,37 +79,43 @@ else
         NewDelivery.Quantity = quantityPerDelivery;
         NewDelivery.OrderId = orderId;
 
-        lastActiveOrder.ActualQuantity += lastActiveOrder.QuantityPerDelivery;
-
-        if(lastActiveOrder.ActualQuantity >= lastActiveOrder.GoalQuantity)
-        {
-            lastActiveOrder.IsCompleted = true;
-            lastActiveOrder.IsActive = false;
-        }
-
-        Context.Deliveries.Add(NewDelivery);
-
-        await Context.SaveChangesAsync();
-
-        if (lastActiveOrder.IsActive == false)
-        {
-            NavigationManager.NavigateTo("/deliveries", true);
-        }
-    }
-
-    async Task HandleSubmit() {
         if (lastActiveOrder is not null)
         {
-            await CreateDelivery();
+            lastActiveOrder.ActualQuantity += lastActiveOrder.QuantityPerDelivery;
+
+            if (lastActiveOrder.ActualQuantity >= lastActiveOrder.GoalQuantity)
+            {
+                lastActiveOrder.IsCompleted = true;
+                lastActiveOrder.IsActive = false;
+            }
+
+            Context.Deliveries.Add(NewDelivery);
+
+            await Context.SaveChangesAsync();
+
+            if (lastActiveOrder.IsActive == false)
+            {
+                NavigationManager.NavigateTo("/deliveries", true);
+            }
         }
+
+    }
+
+    async Task HandleSubmit() 
+    {
+        await CreateDelivery();
+        // string mailUser = "kozlovskyaskb@hotmail.com";
+        // string mailUserPwd = "Eskabe2021+";
+        // var sender = new OutlookDotComMail(mailUser, mailUserPwd);
+        // sender.SendMail("andriy.kozlovsky005@gmail.com", "Asunto del correo", "¡Hola!");
     }
 
     private void SetActualQuantityGoal()
     {
         actualTime = DateTime.Now;
         actualHourMinute = actualTime.Hour + (float)actualTime.Minute / 60;
-        startHourMinute = lastActiveOrder.StartHour + (float)lastActiveOrder.StartMinute / 60;
-        endHourMinute = lastActiveOrder.EndHour + (float)lastActiveOrder.EndMinute / 60;
+        startHourMinute = lastActiveOrder?.StartHour + (float)lastActiveOrder?.StartMinute! / 60;
+        endHourMinute = lastActiveOrder?.EndHour + (float)lastActiveOrder?.EndMinute! / 60;
 
         partsPerHour = lastActiveOrder.GoalQuantity / (endHourMinute - startHourMinute);
 
@@ -101,15 +124,17 @@ else
 
     private void SetStatusColor()
     {
-        if (lastActiveOrder.ActualQuantity >= actualQuantityGoal - 5)
+        if (lastActiveOrder?.ActualQuantity >= actualQuantityGoal - 5)
         {
             statusColor = "lawngreen";
         } 
-        if (lastActiveOrder.ActualQuantity <= actualQuantityGoal - 5)
+        if (lastActiveOrder?.ActualQuantity <= actualQuantityGoal - 5)
         {
             statusColor = "yellow";
+
+            
         }
-        if (lastActiveOrder.ActualQuantity <= actualQuantityGoal - 20)
+        if (lastActiveOrder?.ActualQuantity <= actualQuantityGoal - 20)
         {
             statusColor = "red";
         }
