@@ -26,11 +26,11 @@ builder.Services.AddCors(options =>
     });
 });
 
-// Habilitar este bloque solo para produccion
-//builder.WebHost.ConfigureKestrel(serverOptions =>
-//{
-//    serverOptions.ListenAnyIP(5000);
-//});
+/* Habilitar este bloque solo para produccion */
+builder.WebHost.ConfigureKestrel(serverOptions =>
+{
+   serverOptions.ListenAnyIP(5000);
+});
 
 var app = builder.Build();
 

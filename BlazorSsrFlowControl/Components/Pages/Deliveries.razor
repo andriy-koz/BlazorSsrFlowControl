@@ -15,9 +15,9 @@
     </div>
 
     <EditForm FormName="DeliveryForm" Model="NewDelivery" OnSubmit="HandleSubmit">
-        <InputNumber @bind-Value="NewDelivery.Quantity" class="visually-hidden" />
-        <InputNumber @bind-Value="NewDelivery.OrderId" class="visually-hidden" />
-        <button type="submit" style=@buttonStyle>Enviar</button> 
+        <InputNumber @bind-Value="NewDelivery.Quantity" style="display:none;" />
+        <InputNumber @bind-Value="NewDelivery.OrderId" style="display:none;" />
+        <button type="submit" style=@buttonStyle id="deliveryBtn">Enviar</button> 
     </EditForm>
 }
 else 
