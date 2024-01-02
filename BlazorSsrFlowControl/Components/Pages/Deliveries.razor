@@ -27,8 +27,8 @@ else
 
 @code 
 {
-    [SupplyParameterFromForm]
-    private Delivery NewDelivery { get; set; } = new();
+        [SupplyParameterFromForm]
+        private Delivery NewDelivery { get; set; } = new();
     private Order? lastActiveOrder = new();
     private int orderId;
     private int? quantityPerDelivery;
@@ -104,10 +104,15 @@ else
     async Task HandleSubmit() 
     {
         await CreateDelivery();
-        // string mailUser = "kozlovskyaskb@hotmail.com";
-        // string mailUserPwd = "Eskabe2021+";
-        // var sender = new OutlookDotComMail(mailUser, mailUserPwd);
-        // sender.SendMail("andriy.kozlovsky005@gmail.com", "Asunto del correo", "¡Hola!");
+
+        // if (statusColor == "yellow")
+        // {
+        //     string mailUser = "kozlovskyaskb@hotmail.com";
+        //     string mailUserPwd = "Eskabe2021+";
+        //     var sender = new OutlookDotComMail(mailUser, mailUserPwd);
+        //     sender.SendMail("andriy.kozlovsky005@gmail.com", "Asunto del correo", "¡Hola!");
+
+        // }
     }
 
     private void SetActualQuantityGoal()
@@ -131,8 +136,6 @@ else
         if (lastActiveOrder?.ActualQuantity <= actualQuantityGoal - 5)
         {
             statusColor = "yellow";
-
-            
         }
         if (lastActiveOrder?.ActualQuantity <= actualQuantityGoal - 20)
         {

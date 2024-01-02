@@ -3,6 +3,7 @@
 @inject NavigationManager NavigationManager
 @inject IHttpContextAccessor httpContextAccessor
 @using BlazorSsrFlowControl.Models
+@using BlazorSsrFlowControl.Utils
 
 @if (@deliveries is not null)
 {
@@ -20,7 +21,7 @@
                 <tr>
                     <td>@delivery.OrderId</td>
                     <td>@delivery.Quantity</td>
-                    <td>@delivery.Hour:@delivery.Minute</td>
+                    <td>@FormatNumbers.Time(delivery.Hour):@FormatNumbers.Time(delivery.Minute)</td>
                 </tr>
             }
         </tbody>

@@ -16,6 +16,22 @@ builder.Services.AddDbContext<DataContext>(options =>
 
 builder.Services.AddHttpContextAccessor();
 
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowAll", builder =>
+    {
+        builder.AllowAnyOrigin();
+        builder.AllowAnyMethod();
+        builder.AllowAnyHeader();
+    });
+});
+
+// Habilitar este bloque solo para produccion
+//builder.WebHost.ConfigureKestrel(serverOptions =>
+//{
+//    serverOptions.ListenAnyIP(5000);
+//});
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
